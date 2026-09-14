@@ -1,0 +1,123 @@
+format mlp_flix 64 {slot_ld_in, slot_ld_w, slot_mac}
+
+slot_opcodes slot_ld_in {MLP_LD_IN,
+                          MLP_FILL_C0, MLP_FILL_C1, MLP_FILL_C2, MLP_FILL_C3,
+                          MLP_FILL_C4, MLP_FILL_C5, MLP_FILL_C6, MLP_FILL_C7,
+                          MLP_SEL_C0,  MLP_SEL_C1,  MLP_SEL_C2,  MLP_SEL_C3,
+                          MLP_SEL_C4,  MLP_SEL_C5,  MLP_SEL_C6,  MLP_SEL_C7}
+slot_opcodes slot_ld_w {MLP_LD_W}
+slot_opcodes slot_mac {MAC_SIMD}
+
+state ptr_in		32 add_read_write
+state ptr_w			32 add_read_write
+state mlp_acc		32 add_read_write
+
+state mlp_in128_buf 128 add_read_write
+state mlp_w128_buf 128 add_read_write
+
+/* -----------------------------------------------------------------
+ * Sliding-window data cache: 8 x 128-bit registers.
+ * FC1 uses slots 0-3 to hold the entire 64-byte input vector.
+ * FC2 uses slots 0-7 to hold the entire 128-byte hidden vector.
+ * Filled ONCE per layer instead of once per neuron.
+ * ----------------------------------------------------------------- */
+state mlp_cache0 128 add_read_write
+state mlp_cache1 128 add_read_write
+state mlp_cache2 128 add_read_write
+state mlp_cache3 128 add_read_write
+state mlp_cache4 128 add_read_write
+state mlp_cache5 128 add_read_write
+state mlp_cache6 128 add_read_write
+state mlp_cache7 128 add_read_write
+
+operation MLP_LD_IN{}{out VAddr, in MemDataIn128,inout ptr_in, out mlp_in128_buf}{
+	assign VAddr = ptr_in;
+	assign ptr_in = ptr_in + 16;
+	assign mlp_in128_buf = MemDataIn128;
+}
+
+operation MLP_LD_W {}{out VAddr, in MemDataIn128,inout ptr_w,out mlp_w128_buf}{
+	assign VAddr = ptr_w;
+	assign ptr_w = ptr_w + 16;
+	assign mlp_w128_buf = MemDataIn128;
+}
+
+/* ---- Cache fill operations: one-time load from memory into cache[k] ---- */
+operation MLP_FILL_C0{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache0}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache0 = MemDataIn128;
+}
+operation MLP_FILL_C1{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache1}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache1 = MemDataIn128;
+}
+operation MLP_FILL_C2{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache2}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache2 = MemDataIn128;
+}
+operation MLP_FILL_C3{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache3}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache3 = MemDataIn128;
+}
+operation MLP_FILL_C4{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache4}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache4 = MemDataIn128;
+}
+operation MLP_FILL_C5{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache5}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache5 = MemDataIn128;
+}
+operation MLP_FILL_C6{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache6}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache6 = MemDataIn128;
+}
+operation MLP_FILL_C7{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache7}{
+	assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache7 = MemDataIn128;
+}
+
+/* ---- Cache select operations: zero-latency register copy, no memory access ---- */
+operation MLP_SEL_C0{}{in mlp_cache0, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache0; }
+operation MLP_SEL_C1{}{in mlp_cache1, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache1; }
+operation MLP_SEL_C2{}{in mlp_cache2, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache2; }
+operation MLP_SEL_C3{}{in mlp_cache3, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache3; }
+operation MLP_SEL_C4{}{in mlp_cache4, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache4; }
+operation MLP_SEL_C5{}{in mlp_cache5, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache5; }
+operation MLP_SEL_C6{}{in mlp_cache6, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache6; }
+operation MLP_SEL_C7{}{in mlp_cache7, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache7; }
+
+operation MAC_SIMD{}{inout mlp_acc, in mlp_in128_buf,in mlp_w128_buf}{
+	wire [15:0] tp0 = TIEmul(mlp_in128_buf[7:0],  mlp_w128_buf[7:0], 1'b1);
+	wire [15:0] tp1 = TIEmul(mlp_in128_buf[15:8], mlp_w128_buf[15:8], 1'b1);
+	wire [15:0] tp2 = TIEmul(mlp_in128_buf[23:16], mlp_w128_buf[23:16], 1'b1);
+	wire [15:0] tp3 = TIEmul(mlp_in128_buf[31:24], mlp_w128_buf[31:24], 1'b1);
+	wire [15:0] tp4 = TIEmul(mlp_in128_buf[39:32], mlp_w128_buf[39:32], 1'b1);
+	wire [15:0] tp5 = TIEmul(mlp_in128_buf[47:40], mlp_w128_buf[47:40], 1'b1);
+	wire [15:0] tp6 = TIEmul(mlp_in128_buf[55:48], mlp_w128_buf[55:48], 1'b1);
+	wire [15:0] tp7 = TIEmul(mlp_in128_buf[63:56], mlp_w128_buf[63:56], 1'b1);
+	wire [15:0] tp8 = TIEmul(mlp_in128_buf[71:64], mlp_w128_buf[71:64], 1'b1);
+	wire [15:0] tp9 = TIEmul(mlp_in128_buf[79:72], mlp_w128_buf[79:72], 1'b1);
+	wire [15:0] tp10= TIEmul(mlp_in128_buf[87:80], mlp_w128_buf[87:80], 1'b1);
+	wire [15:0] tp11= TIEmul(mlp_in128_buf[95:88], mlp_w128_buf[95:88], 1'b1);
+	wire [15:0] tp12= TIEmul(mlp_in128_buf[103:96], mlp_w128_buf[103:96], 1'b1);
+	wire [15:0] tp13= TIEmul(mlp_in128_buf[111:104], mlp_w128_buf[111:104], 1'b1);
+	wire [15:0] tp14= TIEmul(mlp_in128_buf[119:112], mlp_w128_buf[119:112], 1'b1);
+	wire [15:0] tp15= TIEmul(mlp_in128_buf[127:120], mlp_w128_buf[127:120], 1'b1);
+
+	wire [31:0] p0 =  {{16{tp0[15]}},tp0};
+	wire [31:0] p1 =  {{16{tp1[15]}},tp1};
+	wire [31:0] p2 =  {{16{tp2[15]}},tp2};
+	wire [31:0] p3 =  {{16{tp3[15]}},tp3};
+	wire [31:0] p4 =  {{16{tp4[15]}},tp4};
+	wire [31:0] p5 =  {{16{tp5[15]}},tp5};
+	wire [31:0] p6 =  {{16{tp6[15]}},tp6};
+	wire [31:0] p7 =  {{16{tp7[15]}},tp7};
+	wire [31:0] p8 =  {{16{tp8[15]}},tp8};
+	wire [31:0] p9 =  {{16{tp9[15]}},tp9};
+	wire [31:0] p10 =  {{16{tp10[15]}},tp10};
+	wire [31:0] p11 =  {{16{tp11[15]}},tp11};
+	wire [31:0] p12 =  {{16{tp12[15]}},tp12};
+	wire [31:0] p13 =  {{16{tp13[15]}},tp13};
+	wire [31:0] p14=  {{16{tp14[15]}},tp14};
+	wire [31:0] p15=  {{16{tp15[15]}},tp15};
+
+	assign mlp_acc = TIEaddn(mlp_acc,p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15);
+}
+
+operation RELU {out AR res, in AR val}{}{
+	wire [31:0] rel = val[31]? 32'b0: val;
+	wire [31:0] div = rel >> 7;
+	assign res = (|div[31:7])? 32'd127: div;
+}

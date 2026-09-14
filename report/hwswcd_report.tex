@@ -1,0 +1,646 @@
+\documentclass[11pt,a4paper]{report}
+
+% ============================================================
+% Engine and fonts
+% Compile with XeLaTeX or LuaLaTeX for best font support.
+% ============================================================
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage[scaled]{helvet}
+  \renewcommand{\familydefault}{\sfdefault}
+\else
+  \usepackage{fontspec}
+  \setsansfont{Noto Sans}
+  \setmonofont{Noto Sans Mono}
+  \renewcommand{\familydefault}{\sfdefault}
+\fi
+
+% ============================================================
+% Page layout and graphics
+% ============================================================
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,positioning}
+\usepackage{wrapfig}
+\usepackage{framed}
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+
+% ============================================================
+% Links, references, code listings
+% ============================================================
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{enumitem}
+\setlist[itemize]{itemsep=2pt,topsep=3pt,parsep=0pt,partopsep=0pt}
+
+% ============================================================
+% TU Dresden style colors, approximated
+% ============================================================
+\definecolor{cdblue}{RGB}{180,20,35}
+\definecolor{cddarkblue}{RGB}{140,10,25}
+\definecolor{cdgreen}{RGB}{0,125,92}
+\definecolor{cdpurple}{RGB}{94,53,177}
+\definecolor{cdgray}{RGB}{90,90,90}
+\definecolor{cdlightgray}{RGB}{235,235,235}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=cdblue,
+    citecolor=cdblue,
+    urlcolor=cdblue,
+    pdftitle={Project Report: HW/SW Co-Design Lab},
+    pdfauthor={Muhammad Rehan Bukhari}
+}
+
+% ============================================================
+% Listings configuration
+% ============================================================
+\lstset{
+    numbers=left,
+    stepnumber=1,
+    firstnumber=1,
+    numberfirstline=true,
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    commentstyle=\color{cdgreen},
+    deletekeywords={...},
+    escapeinside={\%*(}{*)},
+    emphstyle=\bfseries,
+    language=C,
+    moredelim=[is][\bfseries]{\$\$\$}{\$\$\$},
+    frame=single,
+    keepspaces=true,
+    keywordstyle=\color{cddarkblue}\bfseries,
+    morekeywords={*,...},
+    rulecolor=\color{black},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    stringstyle=\color{cdpurple},
+    tabsize=4,
+    title=\lstname
+}
+
+\lstdefinestyle{tie}{
+    language=verilog,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{cddarkblue}\bfseries,
+    commentstyle=\color{cdgreen},
+    stringstyle=\color{cdpurple},
+    numbers=left,
+    frame=single,
+    breaklines=true,
+    tabsize=4,
+    morekeywords={
+        state,regfile,immediate_range,
+        table,
+        interface,
+        operation,
+        schedule,semantic,length,
+        format,slot,slot_opcodes,import_wire,
+        queue,ctype,proto,user_register,coprocessor,
+        function,field,opcode,operand,iclass,reference,
+        add_read_write,assign,core,immediate,
+        in,inout,Inst,InstBuf,MEM,out,wire,
+        export,
+        VAddr,
+        MemDataIn128,MemDataIn64,MemDataIn32,
+        MemDataIn16,MemDataIn8,
+        MemDataOut128,MemDataOut64,MemDataOut32,
+        MemDataOut16,MemDataOut8,
+        LoadByteDisable,StoreByteDisable,
+        shared,slot_shared,
+        lookup,imap,
+        TIEadd,TIEaddn,TIEcmp,TIEcsa,TIEmac,
+        TIEmul,TIEmulpp,TIEmux,TIEpsel,TIEsel,
+        TIEprint,
+        PIFReadDataBits,PIFWriteDataBits,
+        IsaMemoryOrder,IsaUseBooleans,IsaCoprocessorCount
+    },
+    moredelim=[is][\bfseries]{\$\$\$}{\$\$\$}
+}
+
+% ============================================================
+% Helper commands
+% ============================================================
+\newcommand{\question}[1]{\noindent\textit{#1}\\}
+\setlength{\FrameSep}{4pt}
+\newcommand{\answer}[1]{\vspace{-1.5em}\begin{oframed}#1\end{oframed}}
+\newcommand{\emailaddress}[1]{\\{\small\href{mailto:#1}{#1}}}
+
+% ============================================================
+% Report metadata
+% ============================================================
+\newcommand{\reporttitle}{Project Report:\\[0.3em]HW/SW Co-Design Lab}
+\newcommand{\reportsubtitle}{SS 2026}
+\newcommand{\reportdate}{11.09.2026}
+\newcommand{\reportfaculty}{Faculty of Electrical Engineering and Computer Engineering}
+\newcommand{\reportinstitute}{Institute of Communication Technology}
+\newcommand{\reportchair}{Vodafone Chair of Mobile Communications Systems}
+\newcommand{\reportsupervisor}{Shaown Mojumder}
+\newcommand{\studentone}{Muhammad Rehan Bukhari}
+\newcommand{\studentoneemail}{muhammad\_rehan.bukhari@mailbox.tu-dresden.de}
+\newcommand{\studentonematriculation}{5315330}
+
+% TODO: if this lab was done with a partner, uncomment and fill in below,
+% then add the corresponding \\ & Matriculation No. ... lines in the
+% author table further down in \makecustomtitle.
+% \newcommand{\studenttwo}{Student Two}
+% \newcommand{\studenttwoemail}{student.two@mailbox.tu-dresden.de}
+% \newcommand{\studenttwomatriculation}{7654321}
+
+% ============================================================
+% Custom TU Dresden inspired title page
+% Put tud_dresden_logo.png in the same folder as this .tex file.
+% ============================================================
+\newcommand{\makecustomtitle}{%
+\begin{titlepage}
+    \thispagestyle{empty}
+
+    \begin{tikzpicture}[remember picture,overlay]
+        \fill[cdblue] (current page.north west) rectangle ([xshift=1.3cm]current page.south west);
+        \fill[cdlightgray] ([yshift=-2.3cm]current page.north west) rectangle ([yshift=-2.45cm]current page.north east);
+    \end{tikzpicture}
+
+    \vspace*{-1.0cm}
+    \hspace*{0.6cm}\includegraphics[width=8.2cm]{tud_dresden_logo.png}
+
+    \vspace{2.4cm}
+    \hspace*{1.6cm}
+    \begin{minipage}{0.78\textwidth}
+        {\color{cdblue}\bfseries\fontsize{26}{32}\selectfont \reporttitle\par}
+        \vspace{0.35cm}
+        {\color{cdgray}\fontsize{17}{22}\selectfont \reportsubtitle\par}
+
+        \vspace{1.2cm}
+        {\large\reportfaculty\par}
+        \vspace{0.15cm}
+        {\large\reportinstitute\par}
+        \vspace{0.15cm}
+        {\large\reportchair\par}
+
+        \vspace{1.6cm}
+        \begin{tabular}{@{}ll@{}}
+            \textbf{Author:} & \studentone \\
+                  & Matriculation No.: \studentonematriculation \\
+                  & \href{mailto:\studentoneemail}{\studentoneemail} \\
+            % TODO: if done with a partner, add rows here:
+            % & \studenttwo \\
+            % & Matriculation No.: \studenttwomatriculation \\
+            % & \href{mailto:\studenttwoemail}{\studenttwoemail} \\
+            \textbf{Supervisor:} & \reportsupervisor \\
+            \textbf{Date:} & \reportdate \\
+        \end{tabular}
+    \end{minipage}
+
+    \vfill
+    \hspace*{1.6cm}{\small\color{cdgray}Technische Universit\"at Dresden}
+\end{titlepage}
+}
+
+\begin{document}
+
+\makecustomtitle
+
+\chapter*{Introduction}
+
+\newlength{\unit}
+\setlength{\unit}{.5cm}
+
+\tikzset{
+    start/.style={draw,rectangle,text width=2.5\unit,rounded corners=.2\unit,
+    minimum height=1\unit,align=center},
+    xtstep/.style={draw,rectangle,text width=4.5\unit,minimum height=\unit,
+    align=center},
+    fork/.style={draw,diamond,text width=2.9\unit,inner sep=1pt,align=center,
+    aspect=2}
+}
+
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \centering
+    \begin{tikzpicture}[node distance=.6\unit,font=\tiny]
+        \node[start] (step1) {Start};
+        \node[xtstep,below=of step1] (step2) {1. Profile Application to find Hot
+        Spots};
+        \node[xtstep,below=of step2] (step3) {2. Describe TIE Instruction Set
+        Extensions};
+        \node[xtstep,below=of step3] (step4) {3. Modify Application to use TIE};
+        \node[fork,below=of step4] (step5) {TIE functionally correct?};
+        \node[fork,below=of step5] (step6) {Target performance achieved?};
+        \node[start,below=of step6] (step7) {Hardware Optimization};
+
+        \node[coordinate,right=of step2] (loopback) {};
+
+        \draw[->] (step1) -- (step2);
+        \draw[->] (step2) -- node[coordinate,midway] (loop) {} (step3);
+        \draw[->] (step3) -- (step4);
+        \draw[->] (step4) -- (step5);
+        \draw[->] (step5) -- node[right] {Yes} (step6);
+        \draw[->] (step5) -| node[midway,right] {No} (loopback |- loop) -- (loop);
+        \draw[->] (step6) -- node[right] {Yes} (step7);
+        \draw[->] (step6) -| node[midway,right] {No} (loopback |- loop) -- (loop);
+    \end{tikzpicture}
+    \caption{Similar to Tensilica Instruction Extension (TIE) Language, User's
+    Guide. 02/2014, p. 4.}
+    \label{fig:flow}
+\end{wrapfigure}
+
+The HW/SW Co-Design Lab is intended to give a first practical access to this
+topic and experiencing the potential of the conjoint design of hardware and
+software. For this purpose, the reconfigurable processor flow from the company
+\emph{Tensilica} is used (shown in \cref{fig:flow}). The tool suite provides
+convenient means for analyzing and optimizing the performance of the software.
+Especially the possibility to easily extend the processor's hardware
+architecture by customer specific instructions using the \emph{Tensilica
+Instruction Extension (TIE)} language is well suited to demonstrate the
+interaction between hardware and software design.
+
+Within the scope of this lab, the following 2 exercises should be done:
+
+\begin{enumerate}
+\item Implementation of a finitie impulse response (FIR) filter design including
+    performance analysis; HW/SW optimization: e.g., by Fusion, SIMD extension,
+    etc.; also consider different implementation alternatives for the FIR.
+\item Enhance the performance of a given Vision Transformer (ViT) Feed-Forward Network (MLP) kernel using HW/SW co-design techniques such as Fusion, SIMD, FLIX, custom instructions, and other instruction extension methods.
+\end{enumerate}
+
+\noindent\emph{The written report should only include the results of the second task and
+need not exceed 5 pages (source code excerpts not included)!}\\
+
+\chapter*{Source Code}
+
+\section*{Source code C files (only excerpts from the parts that have been
+changed; please highlight important parts).}
+
+The baseline \texttt{mlp\_C} computes each of the three steps
+with a plain scalar loop; the three points marked \texttt{// Hint:
+Optimize here} are exactly the code that was replaced in later stages.
+
+\begin{lstlisting}
+/* Step 1: FC1 */
+for (i = 0; i < HIDDEN; i++) {
+    acc = b1[i];
+    $$$// Hint: Optimize here$$$
+    for (j = 0; j < IN_SIZE; j++) {
+        acc += (int32_t)in[j] * (int32_t)W1[i][j];
+    }
+    fc1[i] = acc;
+}
+/* Step 2: ReLU */
+for (i = 0; i < HIDDEN; i++) {
+    $$$// Hint: Optimize here$$$
+    hidden[i] = relu(fc1[i]);
+}
+/* Step 3: FC2 */
+for (i = 0; i < OUT_SIZE; i++) {
+    acc = b2[i];
+    $$$// Hint: Optimize here$$$
+    for (j = 0; j < HIDDEN; j++) {
+        acc += (int32_t)hidden[j] * (int32_t)W2[i][j];
+    }
+    out[i] = acc;
+}
+\end{lstlisting}
+
+The final \texttt{mlp\_C} kernel (the cache-based FLIX version)
+replaces all three scalar loops above with calls to custom TIE
+instructions. Highlighted parts (bold) mark the two optimizations added
+on top of the earlier SIMD/FLIX stages: filling all cache registers once
+per layer instead of once per neuron, and setting the weight pointer only
+once per layer since \texttt{W1}/\texttt{W2} are row-major and contiguous,
+so it auto-increments to the next row after streaming a full row. The
+scalar \texttt{relu()} from the baseline is likewise replaced by the
+\texttt{RELU()} TIE intrinsic, fused directly onto the MAC result.
+
+\begin{lstlisting}
+void mlp_C(int8_t *in, int32_t *out)
+{
+    int i;
+    int8_t hidden[HIDDEN];
+
+    /* Step 1: FC1 (input -> hidden pre-activation -> ReLU) */
+    WUR_ptr_in((unsigned)in);
+    $$$MLP_FILL_C0();
+    MLP_FILL_C1();
+    MLP_FILL_C2();
+    MLP_FILL_C3();               /* entire input loaded into cache ONCE */$$$
+
+    $$$WUR_ptr_w((unsigned)&W1[0][0]);   /* set weight pointer ONCE for the whole layer */$$$
+
+    for (i = 0; i < HIDDEN; i++) {
+        WUR_mlp_acc(b1[i]);      /* bias still must be reloaded every neuron */
+        MLP_SEL_C0(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C1(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C2(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C3(); MLP_LD_W();
+        MAC_SIMD();
+
+        hidden[i] = RELU(RUR_mlp_acc());
+    }
+
+    /* Step 2: FC2 (hidden activation -> output) */
+    WUR_ptr_in((unsigned)hidden);
+    $$$MLP_FILL_C0(); MLP_FILL_C1(); MLP_FILL_C2(); MLP_FILL_C3();
+    MLP_FILL_C4(); MLP_FILL_C5(); MLP_FILL_C6(); MLP_FILL_C7();$$$
+
+    $$$WUR_ptr_w((unsigned)&W2[0][0]);   /* set weight pointer ONCE for the whole layer */$$$
+
+    for (i = 0; i < OUT_SIZE; i++) {
+        WUR_mlp_acc(b2[i]);
+
+        MLP_SEL_C0(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C1(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C2(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C3(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C4(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C5(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C6(); MLP_LD_W();
+        MAC_SIMD();   MLP_SEL_C7(); MLP_LD_W();
+        MAC_SIMD();
+
+        out[i] = RUR_mlp_acc();   /* raw accumulator, no ReLU on output layer */
+    }
+}
+\end{lstlisting}
+% ############################################################
+
+\section*{Source code TIE files}
+
+The listing below is the relevant excerpt of \texttt{Flix.tie}. Highlighted
+parts (bold) are the sliding-window cache states and the fill/select
+operation pair that removes the per-neuron memory reload (only
+\texttt{C0}/\texttt{C1} are shown; \texttt{C2-C7} follow the identical
+pattern with the corresponding cache register).
+
+\begin{lstlisting}[style=tie]
+format mlp_flix 64 {slot_ld_in, slot_ld_w, slot_mac}
+
+slot_opcodes slot_ld_in {MLP_LD_IN,
+                          MLP_FILL_C0, MLP_FILL_C1, MLP_FILL_C2, MLP_FILL_C3,
+                          MLP_FILL_C4, MLP_FILL_C5, MLP_FILL_C6, MLP_FILL_C7,
+                          MLP_SEL_C0,  MLP_SEL_C1,  MLP_SEL_C2,  MLP_SEL_C3,
+                          MLP_SEL_C4,  MLP_SEL_C5,  MLP_SEL_C6,  MLP_SEL_C7}
+slot_opcodes slot_ld_w {MLP_LD_W}
+slot_opcodes slot_mac {MAC_SIMD}
+
+state ptr_in        32 add_read_write
+state ptr_w         32 add_read_write
+state mlp_acc       32 add_read_write
+
+state mlp_in128_buf 128 add_read_write
+state mlp_w128_buf  128 add_read_write
+
+$$$/* Sliding-window data cache: 8 x 128-bit registers.
+ * FC1 uses slots 0-3 to hold the entire 64-byte input vector.
+ * FC2 uses slots 0-7 to hold the entire 128-byte hidden vector.
+ * Filled ONCE per layer instead of once per neuron. */
+state mlp_cache0 128 add_read_write
+state mlp_cache1 128 add_read_write
+/* mlp_cache2 .. mlp_cache7 declared identically */$$$
+
+operation MLP_LD_IN{}{out VAddr, in MemDataIn128,inout ptr_in, out mlp_in128_buf}{
+    assign VAddr = ptr_in;
+    assign ptr_in = ptr_in + 16;
+    assign mlp_in128_buf = MemDataIn128;
+}
+
+operation MLP_LD_W {}{out VAddr, in MemDataIn128,inout ptr_w,out mlp_w128_buf}{
+    assign VAddr = ptr_w;
+    assign ptr_w = ptr_w + 16;
+    assign mlp_w128_buf = MemDataIn128;
+}
+
+$$$/* Cache fill: one-time load from memory into cache[k] */
+operation MLP_FILL_C0{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache0}{
+    assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache0 = MemDataIn128;
+}
+operation MLP_FILL_C1{}{out VAddr, in MemDataIn128, inout ptr_in, out mlp_cache1}{
+    assign VAddr = ptr_in; assign ptr_in = ptr_in + 16; assign mlp_cache1 = MemDataIn128;
+}
+/* MLP_FILL_C2 .. MLP_FILL_C7 identical, targeting mlp_cache2 .. mlp_cache7 */
+
+/* Cache select: zero-latency register copy, no memory access */
+operation MLP_SEL_C0{}{in mlp_cache0, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache0; }
+operation MLP_SEL_C1{}{in mlp_cache1, out mlp_in128_buf}{ assign mlp_in128_buf = mlp_cache1; }
+/* MLP_SEL_C2 .. MLP_SEL_C7 identical, reading mlp_cache2 .. mlp_cache7 */$$$
+
+operation MAC_SIMD{}{inout mlp_acc, in mlp_in128_buf,in mlp_w128_buf}{
+    wire [15:0] tp0 = TIEmul(mlp_in128_buf[7:0],  mlp_w128_buf[7:0], 1'b1);
+    wire [15:0] tp1 = TIEmul(mlp_in128_buf[15:8], mlp_w128_buf[15:8], 1'b1);
+    /* tp2 .. tp15: identical 8-bit x 8-bit multiplies over the
+     * remaining 14 byte lanes of the 128-bit input/weight buffers */
+
+    wire [31:0] p0 = {{16{tp0[15]}},tp0};
+    wire [31:0] p1 = {{16{tp1[15]}},tp1};
+    /* p2 .. p15: sign-extend the remaining 14 partial products */
+
+    $$$assign mlp_acc = TIEaddn(mlp_acc,p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15);$$$
+}
+
+operation RELU {out AR res, in AR val}{}{
+    wire [31:0] rel = val[31]? 32'b0: val;
+    wire [31:0] div = rel >> 7;
+    assign res = (|div[31:7])? 32'd127: div;
+}
+\end{lstlisting}
+
+\chapter*{Report Questions}
+
+\question{Baseline Implementation}
+
+Explain the baseline MLP implementation.
+\begin{itemize}
+    \item Describe the computation flow of FC1 $\rightarrow$ ReLU $\rightarrow$ FC2.
+    \item Which parts of the code take the most execution time?
+    \item Which loops are executed most frequently?
+\end{itemize}
+\answer{
+\begin{itemize}
+    \item \textbf{Computation flow (FC1 $\to$ ReLU $\to$ FC2):} FC1
+        multiplies the input vector by W1 and adds b1; ReLU clips
+        negative activations to zero; FC2 multiplies the ReLU output
+        by W2 and adds b2 to produce the output. Each FC layer is a
+        nested loop: outer loop over output neurons, inner loop
+        performs a scalar multiply-accumulate (MAC) over input
+        elements.
+    \item \textbf{Parts taking the most execution time:} Almost all
+        runtime is inside \texttt{mlp\_C}: 552,087 of 559,326 total
+        cycles (98.7\,\%), of which 547,095 cycles (97.8\,\% of the
+        total) are the function's own body. The remaining 1.3\,\% is
+        fixed \texttt{\_ResetHandler}/C-runtime startup overhead.
+    \item \textbf{Loops executed most frequently:} The FC1 and FC2
+        inner MAC loops execute most frequently, and equally: each
+        runs HIDDEN x IN\_SIZE = 128 x 64 = 8,192 iterations, since W1
+        (128x64) and W2 (64x128) hold the same number of weights.
+        These 16,384 MAC iterations dominate the baseline runtime, far
+        outweighing the 128-iteration ReLU loop, and are the hot spot
+        targeted by all later optimization stages.
+\end{itemize}
+}
+\question{Optimization Strategy and HW/SW Co-Design}
+
+Describe the optimization methods used in your implementation.
+\begin{itemize}
+    \item What software optimizations were applied?
+    \item What hardware acceleration methods or custom instructions were used?
+    \item Why were these optimizations selected?
+    \item How did the software and hardware optimizations work together?
+    \item Which optimization provided the largest performance improvement?
+\end{itemize}
+\answer{
+\begin{itemize}
+    \item \textbf{Software:} Full unrolling of the small,
+        constant-trip inner loops (4 chunks FC1, 8 FC2); software
+        pipelining (chunk $j$'s MAC alongside chunk $j{+}1$'s loads);
+        removal of a redundant per-neuron weight-pointer reset via the
+        row-major contiguity of \texttt{W1}/\texttt{W2}.
+    \item \textbf{Hardware / custom instructions:} Existing
+        \texttt{MAC\_SIMD} (16-lane 8$\times$8 multiply, 17-input adder
+        tree, one cycle) and 3-slot FLIX bundle. Added: an 8-slot,
+        128-bit sliding-window cache (\texttt{mlp\_cache0..7}) with
+        \texttt{MLP\_FILL\_Ck} (load once per layer) and
+        \texttt{MLP\_SEL\_Ck} (zero-latency copy).
+    \item \textbf{Why selected:} Each targets a distinct waste source:
+        pipelining fills idle FLIX slots; the cache removes redundant
+        transactions (vector re-fetched per neuron instead of per
+        layer); the pointer fix removes dead instructions found via
+        the weight layout. None change the underlying arithmetic.
+    \item \textbf{HW/SW co-design:} Hardware supplies the primitives;
+        software decides when to invoke them. The cache saves nothing
+        without \texttt{mlp.c}'s ``fill once, select many'' pattern;
+        no software change alone cuts the $16\times$ MAC-instruction
+        count without \texttt{MAC\_SIMD} in hardware.
+    \item \textbf{Largest improvement:} By transactions, the cache is
+        largest, removing $\approx$49\,\% (1012 of 2048). By cycles,
+        pipelining plus cache (\texttt{-O2}) took \texttt{mlp\_C} from
+        3{,}786 to 2{,}846; the same code at \texttt{-O0} gave 9{,}949,
+        worse than baseline -- the gain needs compiler scheduling.
+\end{itemize}
+}
+
+\question{Computational Efficiency}
+
+Explain how your implementation improves computational efficiency.
+\begin{itemize}
+    \item Were there opportunities to reduce unnecessary computations?
+    \item Did your implementation reduce unnecessary memory accesses or operations?
+    \item Explain how your optimization improved execution efficiency.
+    \item Hint: Carefully analyze the workload and dataset structure.
+\end{itemize}
+\answer{
+\begin{itemize}
+    \item \textbf{Reducing computations:} Not in FLOP count -- this is a
+        dense MLP, every weight genuinely contributes, so no MAC was
+        unnecessary. Savings came from \emph{how} MACs were issued:
+        $16\times$ fewer instructions via SIMD, and removing pointer
+        resets that recomputed a value auto-increment already held.
+    \item \textbf{Reducing memory accesses:} Yes, substantially. The
+        cache cut memory transactions from 2{,}048 to 1{,}036
+        ($\approx$49\,\%) by recognizing the input/hidden vector is
+        identical for every neuron in a layer, so it only needs
+        fetching once per layer. The pointer fix removed a further
+        190 instructions recomputing an already-reached address.
+    \item \textbf{Efficiency gained:} Bandwidth (far fewer bytes moved
+        for the same result) and issue efficiency (more useful work
+        per FLIX bundle once adjacent loads/compute no longer
+        serialize).
+    \item \textbf{Workload structure:} The key insight is a reuse
+        asymmetry: the activation vector is broadcast (read
+        identically by every neuron in a layer), while the weight
+        matrix is streamed (each row read once) -- a dense
+        matrix-vector product $W \cdot x$ where $x$ is reused and $W$
+        is not. This motivated caching the activation vector, not the
+        weights. Separately, \texttt{W1}/\texttt{W2} being row-major
+        and contiguous enabled the pointer-reset elimination.
+\end{itemize}
+}
+\question{Performance Evaluation}
+
+Evaluate the performance of your implementation.
+\begin{itemize}
+    \item Compare execution cycles before and after optimization.
+    \item Report the achieved speedup.
+    \item If performance decreased in any step, explain why.
+    \item Which part of the implementation is still the main bottleneck?
+\end{itemize}
+\answer{
+\begin{itemize}
+    \item \textbf{Cycles and speedup:}
+        \begin{center}
+        \begin{tabular}{@{}lrr@{}}
+        \hline
+        \textbf{Build} & \textbf{\texttt{mlp\_C} cycles} & \textbf{Speedup} \\
+        \hline
+        Baseline (scalar C, \texttt{-O0}) & 552{,}087 & 1.00x \\
+        Pipelined FLIX (no cache) & 3{,}786 & 145.8x \\
+        Cache-based FLIX (final) & 2{,}846 & 194.0x \\
+        \hline
+        \end{tabular}
+        \end{center}
+        The big jump comes from moving to FLIX in the first place. The
+        cache on top of that is a smaller, further win: it takes
+        \texttt{mlp\_C} from 3{,}786 down to 2{,}846 cycles, about
+        25\,\% off what was already a fast build.
+    \item \textbf{Where performance decreased:} No regression was
+        seen between these three builds; each stage was strictly
+        faster than the one before it.
+    \item \textbf{Remaining bottleneck:} With the kernel this fast,
+        the bottleneck has shifted entirely, a textbook case of
+        Amdahl's Law: the fixed \texttt{\_ResetHandler}/C-runtime
+        startup cost (3{,}906 cycles) barely registered in the
+        552,087-cycle baseline, but in the final 8{,}996-cycle total
+        it now accounts for 43.4\,\% of all runtime, more than the
+        optimized kernel itself. Within \texttt{mlp\_C} specifically,
+        what remains is the weight stream: every neuron's weight row
+        is unique and read once, so there is nothing left to cache
+        there. Secondarily, the \texttt{RUR\_mlp\_acc()} $\to$
+        \texttt{RELU()} $\to$ store tail per FC1 neuron cannot overlap
+        with that neuron's own MAC work (a fusion attempt was tried
+        and reverted).
+\end{itemize}
+}
+
+\question{Area, Trade-offs, and Correctness}
+
+Evaluate the hardware cost and overall implementation trade-offs.
+\begin{itemize}
+    \item What is the hardware area impact of your optimizations?
+    \item Discuss the trade-off between performance and hardware cost.
+    \item Explain how correctness was verified using the reference output.
+    \item Which optimization provided the best speed/area trade-off?
+\end{itemize}
+\answer{
+\begin{itemize}
+    \item \textbf{Area impact:} On the 150,000-gate base core: the
+        main-task TIE optimizations (MAC fusion, SIMD, dual DMEM,
+        fused ReLU/quant) add 30,691 gates (20.5\,\%) for 9.21x. The
+        bonus FLIX track adds 13,024 gates (about 8\,\%) for 145.8x in
+        its pipelined-only form, rising to 29,997 gates (about
+        16.7\,\%) for 194.0x once the sliding-window cache is added.
+    \item \textbf{Performance vs. cost:} Diminishing returns within
+        the FLIX track: the cache-based version spends 130\,\% more
+        gates than the pipelined-only version for only 33\,\% more
+        speedup. Pipelining and the pointer fix cost zero extra gates,
+        so they were applied first.
+    \item \textbf{Correctness verification:} Checked on the ISS
+        (\texttt{xt-run}): outputs compared against
+        \texttt{ref\_out[]}, printing \texttt{"Results match."} on
+        success, confirmed for every stage including the final
+        cache-based FLIX version.
+    \item \textbf{Best speed/area trade-off:} The pointer-reset fix:
+        190 instructions removed for zero gates. Among area-costing
+        changes, the pipelined-only FLIX version (13,024 gates,
+        145.8x) trades better than the cache-based version; the
+        cache-based version was still kept as final since cycle
+        count, not area efficiency, is the primary metric.
+\end{itemize}
+}
+\end{document}

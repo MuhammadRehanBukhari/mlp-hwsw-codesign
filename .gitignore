@@ -1,0 +1,9 @@
+*.aux
+*.log
+*.out
+*.toc
+weights_w1.h
+weights_w2.h
+biases.h
+activations.h
+reference_output.h
