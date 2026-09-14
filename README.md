@@ -72,8 +72,3 @@ Built and profiled with Xtensa Xplorer / TDK (RF-2016.4) targeting the
 golden reference on the Xtensa ISS (`xt-run`), which prints `Results match.`
 on a successful run for every build listed above.
 
-## Report
-
-The full writeup, covering the optimization strategy, computational
-efficiency analysis, performance evaluation, and area/trade-off discussion,
-is in `report/hwswcd_report.pdf`.
